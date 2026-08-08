@@ -129,7 +129,7 @@
 
     <div id="privacyImportHint" style="margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font-size:12px;line-height:1.55">
       <b style="display:block;margin-bottom:4px">首次安装后导入历史记录</b>
-      GitHub 版本不包含你的私人数据。安装到 iPhone 后，点右上角“•••” → “导入备份”，选择单独保存的 <b>我的减脂历史数据_请勿上传.json</b> 即可。
+      GitHub 版本不包含你的私人数据。安装到 iPhone 后，点右上角“•••” → “导入备份文件”，选择单独保存的 <b>我的减脂历史数据_请勿上传.json</b> 即可。
     </div>
     <div class="install-hint" id="installHint">
       <b>安装成 iPhone App</b>
@@ -224,7 +224,9 @@
           正在检测应用状态…
         </div>
         <button id="exportBtn" type="button"><b>导出备份文件</b><small>保存为 JSON，可用于换手机或恢复数据</small></button>
-        <button id="showImportBtn" type="button"><b>粘贴备份数据</b><small>也可用于批量导入历史体重和围度</small></button>
+        <button id="chooseImportFileBtn" type="button"><b>导入备份文件</b><small>从 iPhone「文件」中选择 JSON 备份，导入后立即恢复记录</small></button>
+        <input id="importFileInput" type="file" accept=".json,application/json" class="hidden">
+        <button id="showImportBtn" type="button"><b>粘贴 JSON 数据</b><small>文件选择不可用时的备用导入方式</small></button>
       </div>
       <div id="importBox" class="hidden" style="margin-top:12px">
         <textarea id="importText" placeholder='粘贴 JSON 数据'></textarea>
@@ -584,14 +586,39 @@
     const blob=new Blob([JSON.stringify({version:3,exportedAt:new Date().toISOString(),...state},null,2)],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`减脂记录备份_${todayISO()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('备份文件已生成');
   }
+  function applyImportedObject(x){
+    if(!x || !Array.isArray(x.weights) || !Array.isArray(x.measures)) throw new Error('bad');
+    const weights=x.weights
+      .map(r=>({date:String(r.date),weight:Number(r.weight)}))
+      .filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&Number.isFinite(r.weight));
+    const measures=x.measures
+      .map(normalizeMeasure)
+      .filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date));
+    state={weights,measures};
+    save();
+    renderAll();
+    document.querySelector('#settingsModal').classList.add('hidden');
+    toast(`已导入 ${weights.length} 条体重、${measures.length} 组围度`);
+  }
+
   function importData(){
     try{
       const x=JSON.parse(document.querySelector('#importText').value);
-      if(!Array.isArray(x.weights)||!Array.isArray(x.measures)) throw new Error('bad');
-      const weights=x.weights.map(r=>({date:String(r.date),weight:Number(r.weight)})).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&Number.isFinite(r.weight));
-      const measures=x.measures.map(normalizeMeasure).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date));
-      state={weights,measures};save();renderAll();document.querySelector('#settingsModal').classList.add('hidden');toast('数据已导入');
+      applyImportedObject(x);
     }catch(e){toast('数据格式无法识别');}
+  }
+
+  async function importBackupFile(file){
+    if(!file) return;
+    try{
+      const raw=await file.text();
+      const x=JSON.parse(raw);
+      applyImportedObject(x);
+    }catch(e){
+      toast('备份文件无法识别');
+    }finally{
+      document.querySelector('#importFileInput').value='';
+    }
   }
 
   document.querySelector('#todayText').textContent=new Intl.DateTimeFormat('zh-CN',{month:'long',day:'numeric',weekday:'long'}).format(new Date());
@@ -645,6 +672,13 @@
   document.querySelector('#closeSettings').addEventListener('click',()=>document.querySelector('#settingsModal').classList.add('hidden'));
   document.querySelector('#settingsModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.add('hidden')});
   document.querySelector('#exportBtn').addEventListener('click',exportData);
+  document.querySelector('#chooseImportFileBtn').addEventListener('click',()=>{
+    document.querySelector('#importFileInput').click();
+  });
+  document.querySelector('#importFileInput').addEventListener('change',e=>{
+    const file=e.target.files && e.target.files[0];
+    if(file) importBackupFile(file);
+  });
   document.querySelector('#showImportBtn').addEventListener('click',()=>document.querySelector('#importBox').classList.remove('hidden'));
   document.querySelector('#cancelImport').addEventListener('click',()=>document.querySelector('#importBox').classList.add('hidden'));
   document.querySelector('#importBtn').addEventListener('click',importData);

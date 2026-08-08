@@ -1,4 +1,4 @@
-const CACHE_NAME='fatloss-record-pwa-github-v1';
+const CACHE_NAME='fatloss-record-pwa-github-v2';
 const APP_SHELL=[
   './',
   './index.html',
