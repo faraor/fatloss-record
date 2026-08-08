@@ -21,10 +21,10 @@
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html{background:var(--bg)}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;min-height:100vh;padding-bottom:calc(92px + env(safe-area-inset-bottom));overflow-x:hidden}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;min-height:100vh;overflow-x:hidden}
     button,input,select{font:inherit;color:inherit}
     button{cursor:pointer}
-    .app{max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(122px + env(safe-area-inset-bottom))}
+    .app{max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(84px + env(safe-area-inset-bottom))}
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
     .title-wrap small{display:block;color:var(--muted);font-size:12px;margin-bottom:3px}
     h1{font-size:25px;line-height:1.2;margin:0;font-weight:760;letter-spacing:-.02em}
@@ -90,14 +90,14 @@
     .nav-btn{border:0;background:transparent;border-radius:16px;padding:10px 8px;color:var(--muted);display:grid;place-items:center;gap:3px;font-size:11px}
     .nav-btn strong{font-size:17px;font-weight:600}
     .nav-btn.active{background:var(--card);color:var(--accent);box-shadow:var(--shadow)}
-    .modal{position:fixed;inset:0;z-index:30;background:rgba(29,35,33,.34);display:grid;align-items:end;padding:14px}
-    .sheet{width:min(520px,100%);margin:0 auto;background:var(--card);border-radius:26px;padding:18px;max-height:80vh;overflow:auto}
+    .modal{position:fixed;inset:0;z-index:10050;background:rgba(29,35,33,.34);display:grid;align-items:end;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+    .sheet{width:min(520px,100%);margin:0 auto;background:var(--card);border-radius:26px;padding:18px;max-height:calc(100dvh - 42px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto;-webkit-overflow-scrolling:touch}
     .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
     .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
     .danger{border:0;background:var(--rose-soft);color:var(--rose);border-radius:14px;padding:11px;font-weight:700}
     .save{border:0;background:var(--accent);color:#fff;border-radius:14px;padding:11px;font-weight:700}
-    .settings-list{display:grid;gap:10px}
-    .settings-list button{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:15px;padding:12px 13px}
+    .settings-list{display:grid;gap:9px}
+    .settings-list button{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:15px;padding:11px 13px}
     .settings-list small{display:block;color:var(--muted);margin-top:3px}
     textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);resize:vertical}
     .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);background:#29312f;color:white;padding:9px 13px;border-radius:999px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:50;white-space:nowrap}
@@ -111,10 +111,6 @@
     .fallback-details summary{list-style:none;width:100%;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:11px 12px;font-weight:750;text-align:center}
     .fallback-details summary::-webkit-details-marker{display:none}
     .storage-notice{display:none;margin:0 0 12px;padding:10px 12px;border-radius:14px;background:#f4e7e4;color:#8d5d57;font-size:12px;line-height:1.45}
-    .install-hint{display:none;margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);border-radius:16px;background:var(--accent-soft);color:var(--accent)}
-    .install-hint b{display:block;font-size:13px;margin-bottom:3px}
-    .install-hint span{display:block;font-size:11px;line-height:1.45}
-    @media (display-mode:standalone){.install-hint{display:none!important}}
 </style>
 </head>
 <body>
@@ -126,17 +122,7 @@
       </div>
       <button class="icon-btn" id="settingsBtn" aria-label="数据备份与恢复">•••</button>
     </div>
-
-    <div id="privacyImportHint" style="margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font-size:12px;line-height:1.55">
-      <b style="display:block;margin-bottom:4px">首次安装后导入历史记录</b>
-      GitHub 版本不包含你的私人数据。安装到 iPhone 后，点右上角“•••” → “导入备份文件”，选择单独保存的 <b>我的减脂历史数据_请勿上传.json</b> 即可。
-    </div>
-    <div class="install-hint" id="installHint">
-      <b>安装成 iPhone App</b>
-      <span>请用 Safari 打开这个 HTTPS 页面，点“分享” → “添加到主屏幕”。安装后从桌面图标进入即可。</span>
-    </div>
-
-    <div class="storage-notice" id="storageNotice">当前浏览环境无法使用持久化数据库。历史数据仍会显示，但新增记录可能无法长期保存；请先导出备份，并改用安装后的主屏幕 App。</div>
+<div class="storage-notice" id="storageNotice">当前浏览环境无法使用持久化数据库。历史数据仍会显示，但新增记录可能无法长期保存；请先导出备份，并改用安装后的主屏幕 App。</div>
 
     <section id="weightView" class="section-stack">
       <div class="summary">
@@ -218,12 +204,9 @@
 
   <div class="modal hidden" id="settingsModal" role="dialog" aria-modal="true">
     <div class="sheet">
-      <div class="sheet-head"><h2>数据备份</h2><button class="icon-btn" id="closeSettings" aria-label="关闭">×</button></div>
+      <div class="sheet-head"><h2>数据</h2><button class="icon-btn" id="closeSettings" aria-label="关闭">×</button></div>
       <div class="settings-list">
-        <div id="appModeInfo" style="padding:12px 13px;border:1px solid var(--line);border-radius:15px;background:var(--accent-soft);font-size:12px;line-height:1.5;color:var(--accent)">
-          正在检测应用状态…
-        </div>
-        <button id="exportBtn" type="button"><b>导出备份文件</b><small>保存为 JSON，可用于换手机或恢复数据</small></button>
+<button id="exportBtn" type="button"><b>导出备份文件</b><small>保存为 JSON，可用于换手机或恢复数据</small></button>
         <button id="chooseImportFileBtn" type="button"><b>导入备份文件</b><small>从 iPhone「文件」中选择 JSON 备份，导入后立即恢复记录</small></button>
         <input id="importFileInput" type="file" accept=".json,application/json" class="hidden">
         <button id="showImportBtn" type="button"><b>粘贴 JSON 数据</b><small>文件选择不可用时的备用导入方式</small></button>
@@ -682,19 +665,7 @@
   document.querySelector('#showImportBtn').addEventListener('click',()=>document.querySelector('#importBox').classList.remove('hidden'));
   document.querySelector('#cancelImport').addEventListener('click',()=>document.querySelector('#importBox').classList.add('hidden'));
   document.querySelector('#importBtn').addEventListener('click',importData);
-
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const installHint=document.querySelector('#installHint');
-  if(installHint) installHint.style.display=isStandalone?'none':'block';
-
-  const appModeInfo=document.querySelector('#appModeInfo');
-  if(appModeInfo){
-    appModeInfo.innerHTML=isStandalone
-      ? '<b>已从主屏幕 App 运行</b><br>数据优先保存在 IndexedDB，可离线使用。'
-      : '<b>当前在浏览器中运行</b><br>部署到 HTTPS 后，请用 Safari 的“分享 → 添加到主屏幕”安装。';
-  }
-
-  renderAll();
+renderAll();
   initPersistentState();
 
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){
