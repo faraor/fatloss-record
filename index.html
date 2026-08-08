@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#f5f3ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="减脂记录">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <title>减脂记录｜体重与围度</title>
+  <style>
+    :root{
+      --bg:#f5f3ee;--card:#fffdf9;--ink:#29312f;--muted:#7d8682;--line:#e8e4dc;
+      --accent:#627c72;--accent-soft:#e5ece8;--rose:#b87870;--rose-soft:#f4e7e4;
+      --gold:#a98c54;--shadow:0 8px 28px rgba(50,58,55,.07);--r:22px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html{background:var(--bg)}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;min-height:100vh;padding-bottom:calc(92px + env(safe-area-inset-bottom));overflow-x:hidden}
+    button,input,select{font:inherit;color:inherit}
+    button{cursor:pointer}
+    .app{max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(122px + env(safe-area-inset-bottom))}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+    .title-wrap small{display:block;color:var(--muted);font-size:12px;margin-bottom:3px}
+    h1{font-size:25px;line-height:1.2;margin:0;font-weight:760;letter-spacing:-.02em}
+    h2{font-size:18px;margin:0;font-weight:720}
+    h3{font-size:15px;margin:0;font-weight:700}
+    p{margin:0}
+    .icon-btn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;box-shadow:var(--shadow)}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+    .pad{padding:16px}
+    .hidden{display:none!important}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+    .metric{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px 10px;min-height:88px}
+    .metric .label{font-size:11px;color:var(--muted);white-space:nowrap}
+    .metric .value{font-size:21px;font-weight:760;margin-top:8px;letter-spacing:-.02em}
+    .metric .sub{font-size:11px;color:var(--muted);margin-top:2px}
+    .section-stack{display:grid;gap:12px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .section-head .hint{font-size:12px;color:var(--muted)}
+    .entry-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}
+    label.field{display:grid;gap:6px;font-size:12px;color:var(--muted)}
+    .input-shell{display:flex;align-items:center;gap:8px;min-width:0;border:1px solid var(--line);background:#fff;border-radius:15px;padding:10px 12px}
+    .input-shell input{width:100%;min-width:0;border:0;outline:0;background:transparent;padding:0;font-size:17px}
+    .input-shell input[type="date"]{appearance:none;-webkit-appearance:none;min-width:0;width:100%;padding:0}
+    .unit{font-size:12px;color:var(--muted);white-space:nowrap}
+    .primary{width:100%;margin-top:12px;border:0;border-radius:15px;background:var(--accent);color:white;padding:12px 14px;font-weight:700}
+    .primary:active{transform:scale(.99)}
+    .secondary{border:1px solid var(--line);background:#fff;border-radius:12px;padding:7px 10px;font-size:12px}
+    .chart-wrap{padding:14px 10px 8px}
+    .chart-title{display:flex;justify-content:space-between;align-items:end;padding:0 6px 8px;gap:8px}
+    .chart-title span{font-size:12px;color:var(--muted)}
+    svg.chart{display:block;width:100%;height:auto;overflow:visible}
+    .gridline{stroke:var(--line);stroke-width:1}
+    .axis-text{fill:var(--muted);font-size:10px}
+    .weight-line{fill:none;stroke:var(--accent);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+    .avg-line{fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5 5}
+    .measure-line{fill:none;stroke:var(--accent);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+    .dot{fill:var(--card);stroke:var(--accent);stroke-width:2.2}
+    .legend{display:flex;gap:14px;align-items:center;padding:2px 6px 8px;font-size:11px;color:var(--muted)}
+    .legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:5px;background:var(--accent)}
+    .legend .avg i{background:var(--gold);border-top:1px dashed var(--gold)}
+    .range-tabs,.metric-tabs{display:flex;gap:7px;overflow:auto;padding:0 2px 2px;scrollbar-width:none}
+    .range-tabs::-webkit-scrollbar,.metric-tabs::-webkit-scrollbar{display:none}
+    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 11px;font-size:12px;white-space:nowrap;color:var(--muted)}
+    .chip.active{background:var(--accent-soft);border-color:transparent;color:var(--accent);font-weight:700}
+    .records{display:grid;gap:8px}
+    .record{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:9px;padding:12px 2px;border-bottom:1px solid var(--line)}
+    .record:last-child{border-bottom:0}
+    .record .date{font-size:13px;color:var(--muted)}
+    .record .main{font-size:16px;font-weight:700;text-align:right}
+    .record .delta{font-size:11px;color:var(--muted);text-align:right;min-width:45px}
+    .record-btn{border:0;background:transparent;padding:5px;color:var(--muted);font-size:16px}
+    .empty{padding:26px 8px;text-align:center;color:var(--muted);font-size:13px}
+    .measure-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .measure-form .full{grid-column:1/-1}
+    .measure-list{display:grid;gap:10px}
+    .measure-card{padding:12px 2px;border-bottom:1px solid var(--line)}
+    .measure-card:last-child{border-bottom:0}
+    .measure-date{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .measure-date b{font-size:14px}.measure-date span{font-size:11px;color:var(--muted)}
+    .measure-values{display:flex;flex-wrap:wrap;gap:6px}
+    .measure-pill{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:6px 9px;font-size:11px}
+    .bottom-nav{position:fixed!important;z-index:9999!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;width:100%!important;max-width:520px;margin:0 auto;padding:10px 16px max(10px,env(safe-area-inset-bottom));background:rgba(245,243,238,.97);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid rgba(232,228,220,.96);display:grid;grid-template-columns:1fr 1fr;gap:10px;box-shadow:0 -8px 24px rgba(50,58,55,.06);-webkit-transform:translateZ(0)}
+    .nav-btn{border:0;background:transparent;border-radius:16px;padding:10px 8px;color:var(--muted);display:grid;place-items:center;gap:3px;font-size:11px}
+    .nav-btn strong{font-size:17px;font-weight:600}
+    .nav-btn.active{background:var(--card);color:var(--accent);box-shadow:var(--shadow)}
+    .modal{position:fixed;inset:0;z-index:30;background:rgba(29,35,33,.34);display:grid;align-items:end;padding:14px}
+    .sheet{width:min(520px,100%);margin:0 auto;background:var(--card);border-radius:26px;padding:18px;max-height:80vh;overflow:auto}
+    .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .danger{border:0;background:var(--rose-soft);color:var(--rose);border-radius:14px;padding:11px;font-weight:700}
+    .save{border:0;background:var(--accent);color:#fff;border-radius:14px;padding:11px;font-weight:700}
+    .settings-list{display:grid;gap:10px}
+    .settings-list button{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:15px;padding:12px 13px}
+    .settings-list small{display:block;color:var(--muted);margin-top:3px}
+    textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);resize:vertical}
+    .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);background:#29312f;color:white;padding:9px 13px;border-radius:999px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:50;white-space:nowrap}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media (max-width:360px){.app{padding-left:12px;padding-right:12px}.summary{gap:6px}.metric{padding:11px 8px}.metric .value{font-size:19px}.entry-grid{grid-template-columns:1fr}.measure-form{grid-template-columns:1fr}}
+  
+  .history-toggle{width:100%;margin-top:10px;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:11px 12px;font:inherit;font-weight:750;cursor:pointer}
+  .history-toggle:active{transform:scale(.99)}
+  .older-records{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.fallback-details{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+    .fallback-details summary{list-style:none;width:100%;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:11px 12px;font-weight:750;text-align:center}
+    .fallback-details summary::-webkit-details-marker{display:none}
+    .storage-notice{display:none;margin:0 0 12px;padding:10px 12px;border-radius:14px;background:#f4e7e4;color:#8d5d57;font-size:12px;line-height:1.45}
+    .install-hint{display:none;margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);border-radius:16px;background:var(--accent-soft);color:var(--accent)}
+    .install-hint b{display:block;font-size:13px;margin-bottom:3px}
+    .install-hint span{display:block;font-size:11px;line-height:1.45}
+    @media (display-mode:standalone){.install-hint{display:none!important}}
+</style>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="title-wrap">
+        <small id="todayText">2026年8月8日</small>
+        <h1>减脂记录</h1>
+      </div>
+      <button class="icon-btn" id="settingsBtn" aria-label="数据备份与恢复">•••</button>
+    </div>
+
+    <div id="privacyImportHint" style="margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font-size:12px;line-height:1.55">
+      <b style="display:block;margin-bottom:4px">首次安装后导入历史记录</b>
+      GitHub 版本不包含你的私人数据。安装到 iPhone 后，点右上角“•••” → “导入备份”，选择单独保存的 <b>我的减脂历史数据_请勿上传.json</b> 即可。
+    </div>
+    <div class="install-hint" id="installHint">
+      <b>安装成 iPhone App</b>
+      <span>请用 Safari 打开这个 HTTPS 页面，点“分享” → “添加到主屏幕”。安装后从桌面图标进入即可。</span>
+    </div>
+
+    <div class="storage-notice" id="storageNotice">当前浏览环境无法使用持久化数据库。历史数据仍会显示，但新增记录可能无法长期保存；请先导出备份，并改用安装后的主屏幕 App。</div>
+
+    <section id="weightView" class="section-stack">
+      <div class="summary">
+        <div class="metric"><div class="label">最新体重</div><div class="value" id="latestWeight">—</div><div class="sub">kg</div></div>
+        <div class="metric"><div class="label">7日平均</div><div class="value" id="avg7">—</div><div class="sub">kg</div></div>
+        <div class="metric"><div class="label">近30日变化</div><div class="value" id="change30" style="color:var(--accent)">—</div><div class="sub">kg</div></div>
+      </div>
+
+      <div class="panel pad">
+        <div class="section-head"><h2>记录体重</h2><span class="hint">保存后图表自动更新</span></div>
+        <div class="entry-grid">
+          <label class="field">日期
+            <div class="input-shell"><input id="weightDate" type="date"></div>
+          </label>
+          <label class="field">体重
+            <div class="input-shell"><input id="weightInput" type="number" inputmode="decimal" min="25" max="120" step="0.05" placeholder="49.20"><span class="unit">kg</span></div>
+          </label>
+        </div>
+        <button class="primary" id="saveWeight" type="button">保存今日体重</button>
+      </div>
+
+      <div class="panel chart-wrap">
+        <div class="chart-title"><div><h3>体重趋势</h3><span>实线为每日体重，虚线为7日均值</span></div></div>
+        <div class="range-tabs" id="rangeTabs">
+          <button class="chip active" data-range="30">30天</button>
+          <button class="chip" data-range="90">90天</button>
+          <button class="chip" data-range="all">全部</button>
+        </div>
+        <div id="weightChart"><div class="empty">导入历史数据或新增体重后显示趋势图。</div></div>
+        <div class="legend"><span><i></i>每日体重</span><span class="avg"><i></i>7日平均</span></div>
+      </div>
+
+      <div class="panel pad">
+        <div class="section-head"><h2>最近记录</h2><span class="hint" id="weightCount">暂无记录</span></div>
+        <div class="records" id="weightRecords"></div></div>
+      </div>
+    </section>
+
+    <section id="measureView" class="section-stack hidden">
+      <div class="summary">
+        <div class="metric"><div class="label">最新腰围</div><div class="value" id="latestWaist">—</div><div class="sub">cm</div></div>
+        <div class="metric"><div class="label">最新大腿</div><div class="value" id="latestThigh">—</div><div class="sub">cm</div></div>
+        <div class="metric"><div class="label">最新小腿</div><div class="value" id="latestCalf">—</div><div class="sub">cm</div></div>
+      </div>
+
+      <div class="panel pad">
+        <div class="section-head"><h2>每周围度</h2><span class="hint">建议固定同一时间测量</span></div>
+        <p style="font-size:11px;color:var(--muted);margin:-5px 0 12px">已导入的历史围度截图只标周次，没有具体测量日；历史点按对应周的周末节点排序展示。</p>
+        <div class="measure-form">
+          <label class="field full">日期
+            <div class="input-shell"><input id="measureDate" type="date"></div>
+          </label>
+          <label class="field">腰围<div class="input-shell"><input data-measure="waist" type="number" inputmode="decimal" step="0.1" placeholder="68.0"><span class="unit">cm</span></div></label>
+          <label class="field">臀围<div class="input-shell"><input data-measure="hip" type="number" inputmode="decimal" step="0.1" placeholder="85.0"><span class="unit">cm</span></div></label>
+          <label class="field">大腿围<div class="input-shell"><input data-measure="thigh" type="number" inputmode="decimal" step="0.1" placeholder="51.0"><span class="unit">cm</span></div></label>
+          <label class="field">小腿围<div class="input-shell"><input data-measure="calf" type="number" inputmode="decimal" step="0.1" placeholder="36.0"><span class="unit">cm</span></div></label>
+          <label class="field full">上臂围<div class="input-shell"><input data-measure="arm" type="number" inputmode="decimal" step="0.1" placeholder="24.0"><span class="unit">cm</span></div></label>
+        </div>
+        <button class="primary" id="saveMeasure" type="button">保存本周围度</button>
+      </div>
+
+      <div class="panel chart-wrap">
+        <div class="chart-title"><div><h3>围度趋势</h3><span>点选指标查看变化</span></div></div>
+        <div class="metric-tabs" id="measureTabs"><button class="chip active" data-measure-tab="waist">腰围</button><button class="chip" data-measure-tab="hip">臀围</button><button class="chip" data-measure-tab="thigh">大腿围</button><button class="chip" data-measure-tab="calf">小腿围</button><button class="chip" data-measure-tab="arm">上臂围</button></div>
+        <div id="measureChart"><div class="empty">导入历史数据或新增围度后显示趋势图。</div></div>
+      </div>
+
+      <div class="panel pad">
+        <div class="section-head"><h2>历史围度</h2><span class="hint" id="measureCount">暂无记录</span></div>
+        <div class="measure-list" id="measureRecords"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="主导航">
+    <button class="nav-btn active" data-view="weight"><strong>↘︎</strong><span>体重</span></button>
+    <button class="nav-btn" data-view="measure"><strong>⌁</strong><span>围度</span></button>
+  </nav>
+
+  <div class="modal hidden" id="settingsModal" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <div class="sheet-head"><h2>数据备份</h2><button class="icon-btn" id="closeSettings" aria-label="关闭">×</button></div>
+      <div class="settings-list">
+        <div id="appModeInfo" style="padding:12px 13px;border:1px solid var(--line);border-radius:15px;background:var(--accent-soft);font-size:12px;line-height:1.5;color:var(--accent)">
+          正在检测应用状态…
+        </div>
+        <button id="exportBtn" type="button"><b>导出备份文件</b><small>保存为 JSON，可用于换手机或恢复数据</small></button>
+        <button id="showImportBtn" type="button"><b>粘贴备份数据</b><small>也可用于批量导入历史体重和围度</small></button>
+      </div>
+      <div id="importBox" class="hidden" style="margin-top:12px">
+        <textarea id="importText" placeholder='粘贴 JSON 数据'></textarea>
+        <div class="sheet-actions"><button class="secondary" id="cancelImport" type="button">取消</button><button class="save" id="importBtn" type="button">导入并覆盖</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="editModal" role="dialog" aria-modal="true">
+    <div class="sheet" id="editSheet"></div>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'iphone-fatloss-tracker-v3';
+  const LEGACY_KEY = 'iphone-fatloss-tracker-v1';
+
+  // 已根据用户提供的 10 周截图预置历史数据；空白日期不插值、不补值。
+  const seedWeights = [];
+  // 围度截图仅标周次、无具体测量日；date 使用对应周的周末节点用于排序/绘图，period 保留原始周区间。
+  const seedMeasures = [];
+
+  const measureLabels = {
+    waist:'腰围', hip:'臀围', thigh:'大腿围', calf:'小腿围', arm:'上臂围'
+  };
+  const measureKeys = Object.keys(measureLabels);
+
+  let state = {weights:[...seedWeights], measures:[...seedMeasures]};
+  let weightRange = '30';
+  let selectedMeasure = 'waist';
+  let weightHistoryExpanded = false;
+  let measureHistoryExpanded = false;
+
+  function todayISO(){
+    const d = new Date();
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function parseDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+  function fmtDate(s){ const d=parseDate(s); return `${d.getMonth()+1}月${d.getDate()}日`; }
+  function fmtShort(s){ const d=parseDate(s); return `${d.getMonth()+1}/${d.getDate()}`; }
+  function round(v,n=2){ const p=10**n; return Math.round((v+Number.EPSILON)*p)/p; }
+
+  function normalizeMeasure(r){
+    const o={date:String(r.date||'')};
+    if(r.period) o.period=String(r.period);
+    ['waist','hip','thigh','calf','arm'].forEach(k=>{const v=Number(r[k]);if(Number.isFinite(v))o[k]=v});
+    if(!Number.isFinite(o.thigh)){
+      const a=Number(r.thighL), b=Number(r.thighR);
+      if(Number.isFinite(a)&&Number.isFinite(b))o.thigh=(a+b)/2;
+      else if(Number.isFinite(a))o.thigh=a; else if(Number.isFinite(b))o.thigh=b;
+    }
+    if(!Number.isFinite(o.calf)){
+      const a=Number(r.calfL), b=Number(r.calfR);
+      if(Number.isFinite(a)&&Number.isFinite(b))o.calf=(a+b)/2;
+      else if(Number.isFinite(a))o.calf=a; else if(Number.isFinite(b))o.calf=b;
+    }
+    return o;
+  }
+  function mergeByDate(base,extra,type){
+    const m=new Map(base.map(x=>[x.date,{...x}]));
+    (extra||[]).forEach(x=>{
+      if(!x||!x.date)return;
+      if(type==='weight'){
+        const v=Number(x.weight); if(Number.isFinite(v))m.set(String(x.date),{date:String(x.date),weight:v});
+      }else{
+        const n=normalizeMeasure(x);
+        if(/^\d{4}-\d{2}-\d{2}$/.test(n.date))m.set(n.date,{...(m.get(n.date)||{}),...n});
+      }
+    });
+    return [...m.values()].sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  const DB_NAME='fatloss-tracker-db';
+  const DB_VERSION=1;
+  const DB_STORE='kv';
+  const DB_STATE_KEY='state-v1';
+  let storageAvailable=true;
+
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      if(!('indexedDB' in window)){reject(new Error('IndexedDB unavailable'));return;}
+      const req=indexedDB.open(DB_NAME,DB_VERSION);
+      req.onupgradeneeded=()=>{
+        const db=req.result;
+        if(!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+      };
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error||new Error('IndexedDB open failed'));
+    });
+  }
+
+  async function dbGet(key){
+    const db=await openDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(DB_STORE,'readonly');
+      const req=tx.objectStore(DB_STORE).get(key);
+      req.onsuccess=()=>resolve(req.result ?? null);
+      req.onerror=()=>reject(req.error);
+      tx.oncomplete=()=>db.close();
+    });
+  }
+
+  async function dbSet(key,value){
+    const db=await openDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(DB_STORE,'readwrite');
+      tx.objectStore(DB_STORE).put(value,key);
+      tx.oncomplete=()=>{db.close();resolve(true)};
+      tx.onerror=()=>{db.close();reject(tx.error||new Error('IndexedDB write failed'))};
+      tx.onabort=()=>{db.close();reject(tx.error||new Error('IndexedDB write aborted'))};
+    });
+  }
+
+  function readLegacyLocalStorage(){
+    try{
+      const keys=['iphone-fatloss-tracker-v3','iphone-fatloss-tracker-v2',LEGACY_KEY];
+      for(const key of keys){
+        const raw=localStorage.getItem(key);
+        if(raw) return JSON.parse(raw);
+      }
+    }catch(e){}
+    return null;
+  }
+
+  async function initPersistentState(){
+    let saved=null;
+    try{
+      saved=await dbGet(DB_STATE_KEY);
+      storageAvailable=true;
+    }catch(e){
+      storageAvailable=false;
+    }
+
+    // First PWA launch: migrate data from an older Safari/localStorage version when available.
+    if(!saved){
+      const legacy=readLegacyLocalStorage();
+      if(legacy) saved=legacy;
+    }
+
+    state={
+      weights:mergeByDate(seedWeights,saved&&Array.isArray(saved.weights)?saved.weights:[],'weight'),
+      measures:mergeByDate(seedMeasures,saved&&Array.isArray(saved.measures)?saved.measures:[],'measure')
+    };
+
+    try{
+      await dbSet(DB_STATE_KEY,state);
+      storageAvailable=true;
+      if(navigator.storage && navigator.storage.persist){
+        try{ await navigator.storage.persist(); }catch(e){}
+      }
+    }catch(e){
+      storageAvailable=false;
+      try{localStorage.setItem('iphone-fatloss-tracker-v3',JSON.stringify(state));}catch(_){}
+    }
+    updateStorageStatus();
+    renderAll();
+  }
+
+  function updateStorageStatus(){
+    const n=document.querySelector('#storageNotice');
+    if(n) n.style.display=storageAvailable?'none':'block';
+  }
+
+  function save(){
+    state.weights.sort((a,b)=>a.date.localeCompare(b.date));
+    state.measures.sort((a,b)=>a.date.localeCompare(b.date));
+
+    // Save asynchronously so the UI remains instant.
+    dbSet(DB_STATE_KEY,JSON.parse(JSON.stringify(state))).then(()=>{
+      storageAvailable=true;
+      updateStorageStatus();
+    }).catch(()=>{
+      storageAvailable=false;
+      try{
+        localStorage.setItem('iphone-fatloss-tracker-v3',JSON.stringify(state));
+        storageAvailable=true;
+      }catch(e){}
+      updateStorageStatus();
+    });
+    return true;
+  }
+
+  function toast(msg){
+    const el=document.querySelector('#toast'); el.textContent=msg; el.classList.add('show');
+    clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),1600);
+  }
+
+  function movingAverage(data,days=7){
+    return data.map((p,i)=>{
+      const d0=parseDate(p.date); const vals=[];
+      for(let j=0;j<=i;j++){
+        const dj=parseDate(data[j].date); const diff=(d0-dj)/86400000;
+        if(diff>=0 && diff<days) vals.push(data[j].weight);
+      }
+      return vals.length ? round(vals.reduce((a,b)=>a+b,0)/vals.length,2) : null;
+    });
+  }
+
+  function renderWeightSummary(){
+    const w=state.weights;
+    const latest=w.at(-1);
+    document.querySelector('#latestWeight').textContent=latest?latest.weight.toFixed(2):'—';
+    if(w.length){
+      const lastDate=parseDate(latest.date); const recent=w.filter(x=>(lastDate-parseDate(x.date))/86400000<7).map(x=>x.weight);
+      document.querySelector('#avg7').textContent=recent.length?(recent.reduce((a,b)=>a+b,0)/recent.length).toFixed(2):'—';
+      const cutoff=new Date(lastDate); cutoff.setDate(cutoff.getDate()-30);
+      const base=w.find(x=>parseDate(x.date)>=cutoff) || w[0];
+      const ch=latest.weight-base.weight;
+      const el=document.querySelector('#change30');
+      el.textContent=(ch>0?'+':'')+ch.toFixed(2);
+      el.style.color=ch<0?'var(--accent)':ch>0?'var(--rose)':'var(--ink)';
+    }else{
+      document.querySelector('#avg7').textContent='—';document.querySelector('#change30').textContent='—';
+    }
+  }
+
+  function pointsForWeight(){
+    let data=[...state.weights]; if(!data.length) return [];
+    if(weightRange==='all') return data;
+    const last=parseDate(data.at(-1).date); const cutoff=new Date(last); cutoff.setDate(cutoff.getDate()-Number(weightRange)+1);
+    return data.filter(x=>parseDate(x.date)>=cutoff);
+  }
+
+  function lineChart(container, data, valueAccessor, opts={}){
+    if(data.length<2){container.innerHTML='<div class="empty">至少记录 2 次后显示趋势图</div>';return;}
+    const W=360,H=205,L=38,R=12,T=15,B=31;
+    const vals=data.map(valueAccessor).filter(Number.isFinite);
+    let min=Math.min(...vals), max=Math.max(...vals);
+    const span=Math.max(max-min,0.4); min-=span*.18; max+=span*.18;
+    const t0=parseDate(data[0].date).getTime(), t1=parseDate(data.at(-1).date).getTime();
+    const x=i=>L+(W-L-R)*(t1===t0?0.5:(parseDate(data[i].date).getTime()-t0)/(t1-t0));
+    const y=v=>T+(H-T-B)*(max-v)/(max-min);
+    const grid=[];
+    for(let i=0;i<4;i++){
+      const val=max-(max-min)*i/3, yy=y(val);
+      grid.push(`<line class="gridline" x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}"/><text class="axis-text" x="2" y="${yy+3}">${val.toFixed(1)}</text>`);
+    }
+    const labelIdx=[0,Math.floor((data.length-1)/2),data.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+    const labels=labelIdx.map(i=>`<text class="axis-text" text-anchor="${i===0?'start':i===data.length-1?'end':'middle'}" x="${x(i)}" y="${H-8}">${fmtShort(data[i].date)}</text>`).join('');
+    const path=data.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(valueAccessor(p)).toFixed(1)}`).join(' ');
+    const dots=data.map((p,i)=>`<circle class="dot" cx="${x(i)}" cy="${y(valueAccessor(p))}" r="3"/>`).join('');
+    let extra='';
+    if(opts.avg){
+      const avgs=movingAverage(data,7);
+      const ap=avgs.map((v,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+      extra=`<path class="avg-line" d="${ap}"/>`;
+    }
+    container.innerHTML=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label||'趋势图'}">${grid.join('')}${labels}<path class="${opts.className||'weight-line'}" d="${path}"/>${extra}${dots}</svg>`;
+  }
+
+  function renderWeightChart(){ lineChart(document.querySelector('#weightChart'),pointsForWeight(),p=>p.weight,{avg:true,label:'体重趋势图'}); }
+
+  function weightRecordHTML(r){
+    const idx=state.weights.findIndex(x=>x.date===r.date);
+    const prev=idx>0?state.weights[idx-1]:null;
+    const delta=prev?r.weight-prev.weight:null;
+    return `<div class="record"><div><div class="date">${fmtDate(r.date)}</div></div><div><div class="main">${r.weight.toFixed(2)} kg</div><div class="delta">${delta===null?'':`${delta>0?'+':''}${delta.toFixed(2)}`}</div></div><button class="record-btn" data-edit-weight="${r.date}" aria-label="编辑 ${fmtDate(r.date)}">···</button></div>`;
+  }
+  function renderWeightRecords(){
+    const root=document.querySelector('#weightRecords');
+    const total=state.weights.length;
+    document.querySelector('#weightCount').textContent=total?`最近 3 天 · 共 ${total} 条`:'共 0 条';
+    if(!total){root.innerHTML='<div class="empty">还没有体重记录</div>';return;}
+    const rev=[...state.weights].reverse();
+    const recent=rev.slice(0,3), older=rev.slice(3);
+    let html=recent.map(weightRecordHTML).join('');
+    if(older.length){
+      if(weightHistoryExpanded){
+        html+=`<div class="older-records">${older.map(weightRecordHTML).join('')}</div>`;
+        html+=`<button class="history-toggle" type="button" data-toggle-weight-history>收起更早记录 ↑</button>`;
+      }else{
+        html+=`<button class="history-toggle" type="button" data-toggle-weight-history>展开更早的 ${older.length} 条记录 ↓</button>`;
+      }
+    }
+    root.innerHTML=html;
+  }
+
+  function renderMeasureSummary(){
+    const m=state.measures.at(-1);
+    document.querySelector('#latestWaist').textContent=m&&Number.isFinite(m.waist)?m.waist.toFixed(1):'—';
+    document.querySelector('#latestThigh').textContent=m&&Number.isFinite(m.thigh)?m.thigh.toFixed(1):'—';
+    document.querySelector('#latestCalf').textContent=m&&Number.isFinite(m.calf)?m.calf.toFixed(1):'—';
+  }
+
+  function renderMeasureTabs(){
+    const root=document.querySelector('#measureTabs');
+    root.innerHTML=measureKeys.map(k=>`<button class="chip ${k===selectedMeasure?'active':''}" data-measure-tab="${k}">${measureLabels[k]}</button>`).join('');
+  }
+  function renderMeasureChart(){
+    const data=state.measures.filter(x=>Number.isFinite(x[selectedMeasure]));
+    lineChart(document.querySelector('#measureChart'),data,p=>p[selectedMeasure],{className:'measure-line',label:`${measureLabels[selectedMeasure]}趋势图`});
+  }
+  function measureRecordHTML(r){
+    const pills=measureKeys.filter(k=>Number.isFinite(r[k])).map(k=>`<span class="measure-pill">${measureLabels[k]} ${r[k].toFixed(1)}</span>`).join('');
+    const dateText=r.period?`${r.period} · 周末节点`:`${fmtDate(r.date)}`;
+    return `<div class="measure-card"><div class="measure-date"><b>${dateText}</b><button class="record-btn" data-edit-measure="${r.date}" aria-label="编辑 ${fmtDate(r.date)}">···</button></div><div class="measure-values">${pills}</div></div>`;
+  }
+  function renderMeasureRecords(){
+    const root=document.querySelector('#measureRecords');
+    const total=state.measures.length;
+    document.querySelector('#measureCount').textContent=total?`最近 3 周 · 共 ${total} 周`:'共 0 周';
+    if(!total){root.innerHTML='<div class="empty">还没有围度记录</div>';return;}
+    const rev=[...state.measures].reverse();
+    const recent=rev.slice(0,3), older=rev.slice(3);
+    let html=recent.map(measureRecordHTML).join('');
+    if(older.length){
+      if(measureHistoryExpanded){
+        html+=`<div class="older-records">${older.map(measureRecordHTML).join('')}</div>`;
+        html+=`<button class="history-toggle" type="button" data-toggle-measure-history>收起更早记录 ↑</button>`;
+      }else{
+        html+=`<button class="history-toggle" type="button" data-toggle-measure-history>展开更早的 ${older.length} 周 ↓</button>`;
+      }
+    }
+    root.innerHTML=html;
+  }
+
+  function renderAll(){
+    renderWeightSummary();renderWeightChart();renderWeightRecords();
+    renderMeasureSummary();renderMeasureTabs();renderMeasureChart();renderMeasureRecords();
+  }
+
+  function saveWeight(){
+    const date=document.querySelector('#weightDate').value;
+    const weight=parseFloat(document.querySelector('#weightInput').value);
+    if(!date||!Number.isFinite(weight)){toast('请填写日期和体重');return;}
+    const exists=state.weights.find(x=>x.date===date);
+    if(exists) exists.weight=weight; else state.weights.push({date,weight});
+    save();document.querySelector('#weightInput').value='';renderAll();toast('体重已保存');
+  }
+  function saveMeasure(){
+    const date=document.querySelector('#measureDate').value;if(!date){toast('请选择日期');return;}
+    const obj={date}; let count=0;
+    document.querySelectorAll('[data-measure]').forEach(input=>{const v=parseFloat(input.value);if(Number.isFinite(v)){obj[input.dataset.measure]=v;count++;}});
+    if(!count){toast('至少填写一个围度');return;}
+    const exists=state.measures.find(x=>x.date===date);
+    if(exists) Object.assign(exists,obj); else state.measures.push(obj);
+    save();document.querySelectorAll('[data-measure]').forEach(x=>x.value='');renderAll();toast('围度已保存');
+  }
+
+  function showEditWeight(date){
+    const r=state.weights.find(x=>x.date===date);if(!r)return;
+    const sheet=document.querySelector('#editSheet');
+    sheet.innerHTML=`<div class="sheet-head"><h2>编辑体重</h2><button class="icon-btn" data-close-edit aria-label="关闭">×</button></div><div class="entry-grid"><label class="field">日期<div class="input-shell"><input id="editWeightDate" type="date" value="${r.date}"></div></label><label class="field">体重<div class="input-shell"><input id="editWeightValue" type="number" inputmode="decimal" step="0.05" value="${r.weight}"><span class="unit">kg</span></div></label></div><div class="sheet-actions"><button class="danger" data-delete-weight="${r.date}">删除</button><button class="save" data-save-edit-weight="${r.date}">保存修改</button></div>`;
+    document.querySelector('#editModal').classList.remove('hidden');
+  }
+  function showEditMeasure(date){
+    const r=state.measures.find(x=>x.date===date);if(!r)return;
+    const inputs=measureKeys.map(k=>`<label class="field">${measureLabels[k]}<div class="input-shell"><input data-edit-m="${k}" type="number" inputmode="decimal" step="0.1" value="${Number.isFinite(r[k])?r[k]:''}"><span class="unit">cm</span></div></label>`).join('');
+    const sheet=document.querySelector('#editSheet');
+    sheet.innerHTML=`<div class="sheet-head"><h2>编辑围度</h2><button class="icon-btn" data-close-edit aria-label="关闭">×</button></div><div class="measure-form"><label class="field full">日期<div class="input-shell"><input id="editMeasureDate" type="date" value="${r.date}"></div></label>${inputs}</div><div class="sheet-actions"><button class="danger" data-delete-measure="${r.date}">删除</button><button class="save" data-save-edit-measure="${r.date}">保存修改</button></div>`;
+    document.querySelector('#editModal').classList.remove('hidden');
+  }
+
+  function exportData(){
+    const blob=new Blob([JSON.stringify({version:3,exportedAt:new Date().toISOString(),...state},null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`减脂记录备份_${todayISO()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('备份文件已生成');
+  }
+  function importData(){
+    try{
+      const x=JSON.parse(document.querySelector('#importText').value);
+      if(!Array.isArray(x.weights)||!Array.isArray(x.measures)) throw new Error('bad');
+      const weights=x.weights.map(r=>({date:String(r.date),weight:Number(r.weight)})).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&Number.isFinite(r.weight));
+      const measures=x.measures.map(normalizeMeasure).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date));
+      state={weights,measures};save();renderAll();document.querySelector('#settingsModal').classList.add('hidden');toast('数据已导入');
+    }catch(e){toast('数据格式无法识别');}
+  }
+
+  document.querySelector('#todayText').textContent=new Intl.DateTimeFormat('zh-CN',{month:'long',day:'numeric',weekday:'long'}).format(new Date());
+  document.querySelector('#weightDate').value=todayISO();
+  document.querySelector('#measureDate').value=todayISO();
+  document.querySelector('#saveWeight').addEventListener('click',saveWeight);
+  document.querySelector('#weightInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveWeight()});
+  document.querySelector('#saveMeasure').addEventListener('click',saveMeasure);
+
+  document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-btn').forEach(x=>x.classList.toggle('active',x===btn));
+    const w=btn.dataset.view==='weight';document.querySelector('#weightView').classList.toggle('hidden',!w);document.querySelector('#measureView').classList.toggle('hidden',w);window.scrollTo({top:0,behavior:'smooth'});
+  }));
+
+  document.querySelector('#rangeTabs').addEventListener('click',e=>{
+    const b=e.target.closest('[data-range]');if(!b)return;weightRange=b.dataset.range;
+    document.querySelectorAll('[data-range]').forEach(x=>x.classList.toggle('active',x===b));renderWeightChart();
+  });
+  document.querySelector('#measureTabs').addEventListener('click',e=>{
+    const b=e.target.closest('[data-measure-tab]');if(!b)return;selectedMeasure=b.dataset.measureTab;renderMeasureTabs();renderMeasureChart();
+  });
+  document.querySelector('#weightRecords').addEventListener('click',e=>{
+    const toggle=e.target.closest('[data-toggle-weight-history]');
+    if(toggle){weightHistoryExpanded=!weightHistoryExpanded;renderWeightRecords();return;}
+    const b=e.target.closest('[data-edit-weight]');if(b)showEditWeight(b.dataset.editWeight);
+  });
+  document.querySelector('#measureRecords').addEventListener('click',e=>{
+    const toggle=e.target.closest('[data-toggle-measure-history]');
+    if(toggle){measureHistoryExpanded=!measureHistoryExpanded;renderMeasureRecords();return;}
+    const b=e.target.closest('[data-edit-measure]');if(b)showEditMeasure(b.dataset.editMeasure);
+  });
+
+  document.querySelector('#editModal').addEventListener('click',e=>{
+    if(e.target===e.currentTarget||e.target.closest('[data-close-edit]')){e.currentTarget.classList.add('hidden');return;}
+    let b=e.target.closest('[data-delete-weight]');if(b){state.weights=state.weights.filter(x=>x.date!==b.dataset.deleteWeight);save();renderAll();e.currentTarget.classList.add('hidden');toast('已删除');return;}
+    b=e.target.closest('[data-save-edit-weight]');if(b){
+      const old=b.dataset.saveEditWeight,date=document.querySelector('#editWeightDate').value,v=parseFloat(document.querySelector('#editWeightValue').value);if(!date||!Number.isFinite(v)){toast('请填写完整');return;}
+      state.weights=state.weights.filter(x=>x.date!==old&&x.date!==date);state.weights.push({date,weight:v});save();renderAll();e.currentTarget.classList.add('hidden');toast('已修改');return;
+    }
+    b=e.target.closest('[data-delete-measure]');if(b){state.measures=state.measures.filter(x=>x.date!==b.dataset.deleteMeasure);save();renderAll();e.currentTarget.classList.add('hidden');toast('已删除');return;}
+    b=e.target.closest('[data-save-edit-measure]');if(b){
+      const old=b.dataset.saveEditMeasure,date=document.querySelector('#editMeasureDate').value;if(!date){toast('请选择日期');return;}
+      const prev=state.measures.find(x=>x.date===old);
+      const obj={date};if(prev&&prev.period&&date===old)obj.period=prev.period;
+      document.querySelectorAll('[data-edit-m]').forEach(x=>{const v=parseFloat(x.value);if(Number.isFinite(v))obj[x.dataset.editM]=v});
+      state.measures=state.measures.filter(x=>x.date!==old&&x.date!==date);state.measures.push(obj);save();renderAll();e.currentTarget.classList.add('hidden');toast('已修改');
+    }
+  });
+
+  document.querySelector('#settingsBtn').addEventListener('click',()=>document.querySelector('#settingsModal').classList.remove('hidden'));
+  document.querySelector('#closeSettings').addEventListener('click',()=>document.querySelector('#settingsModal').classList.add('hidden'));
+  document.querySelector('#settingsModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.add('hidden')});
+  document.querySelector('#exportBtn').addEventListener('click',exportData);
+  document.querySelector('#showImportBtn').addEventListener('click',()=>document.querySelector('#importBox').classList.remove('hidden'));
+  document.querySelector('#cancelImport').addEventListener('click',()=>document.querySelector('#importBox').classList.add('hidden'));
+  document.querySelector('#importBtn').addEventListener('click',importData);
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const installHint=document.querySelector('#installHint');
+  if(installHint) installHint.style.display=isStandalone?'none':'block';
+
+  const appModeInfo=document.querySelector('#appModeInfo');
+  if(appModeInfo){
+    appModeInfo.innerHTML=isStandalone
+      ? '<b>已从主屏幕 App 运行</b><br>数据优先保存在 IndexedDB，可离线使用。'
+      : '<b>当前在浏览器中运行</b><br>部署到 HTTPS 后，请用 Safari 的“分享 → 添加到主屏幕”安装。';
+  }
+
+  renderAll();
+  initPersistentState();
+
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    window.addEventListener('load',()=>{
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    });
+  }
+})();
+</script>
+</body>
+</html>
